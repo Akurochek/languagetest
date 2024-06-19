@@ -22,7 +22,7 @@
             border-radius: 10px;
             box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
             text-align: center;
-            margin: 0 10px; /* отступы по бокам */
+            margin: 0 10px;
         }
         h1 {
             color: #007bff;
@@ -77,19 +77,19 @@
             transition: background-color 0.3s ease;
             width: calc(50% - 20px);
             max-width: 200px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* тень */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
         .button-container button:nth-child(1) {
-            background-color: #007bff;
-        }
-        .button-container button:nth-child(2) {
             background-color: #28a745;
         }
-        .button-container button:nth-child(3) {
+        .button-container button:nth-child(2) {
             background-color: #ffc107;
         }
-        .button-container button:nth-child(4) {
+        .button-container button:nth-child(3) {
             background-color: #dc3545;
+        }
+        .button-container button:nth-child(4) {
+            background-color: #007bff;
         }
         .button-container button:hover {
             opacity: 0.8;
@@ -118,17 +118,16 @@
         <div id="result" class="result"></div>
 
         <div class="button-container">
-            <button onclick="nextQuestion()">Продолжить</button>
             <button onclick="checkTranslation()">Проверить</button>
             <button onclick="showAnswer()">Посмотреть ответ</button>
             <button onclick="speakText()">Озвучить</button>
+            <button onclick="nextQuestion()">Продолжить</button>
         </div>
     </div>
 
     <script>
         const synth = window.speechSynthesis;
 
-        // Массивы с вопросами на русском и ответами на английском
         const russianQuestions = [
             "Я наконец-то нашел хорошее парковочное место.",
             "Она получила работу в новом кафе.",
@@ -183,20 +182,61 @@
             document.getElementById('result').textContent = '';
         }
 
+        
         function nextQuestion() {
-            currentIndex = Math.floor(Math.random() * russianQuestions.length);
-            displayQuestion(currentIndex);
+            const normalizeText = (text) => text.toLowerCase().replace(/[^a-z]/g, '');
+
+            const expectedAnswer = englishAnswers[currentIndex].split(' ');
+            const userAnswer = document.getElementById('answerEnglish').value.split(' ');
+
+            let resultHtml = "";
+            let isCorrect = true;
+
+            for (let i = 0; i < expectedAnswer.length; i++) {
+                const normalizedExpected = normalizeText(expectedAnswer[i]);
+                const normalizedUser = normalizeText(userAnswer[i] || '');
+
+                if (normalizedUser === normalizedExpected) {
+                    resultHtml += `<span style="color: green">${userAnswer[i] || ''}</span> `;
+                } else {
+                    resultHtml += `<span style="color: red">${userAnswer[i] || ''}</span> `;
+                    isCorrect = false;
+                }
+            }
+
+            showResult(isCorrect ? "Правильный ответ!" : "Ответ неправильный.", isCorrect);
+            document.getElementById('result').innerHTML += `<div>${resultHtml}</div>`;
+
+            if(isCorrect){
+                currentIndex = Math.floor(Math.random() * russianQuestions.length);
+                displayQuestion(currentIndex);
+            }
+            
         }
 
         function checkTranslation() {
-            const expectedAnswer = englishAnswers[currentIndex].toLowerCase();
-            const userAnswer = document.getElementById('answerEnglish').value.toLowerCase();
+            const normalizeText = (text) => text.toLowerCase().replace(/[^a-z]/g, '');
 
-            if (userAnswer === expectedAnswer) {
-                showResult("Правильный ответ!", true);
-            } else {
-                showResult("Ответ неправильный.", false);
+            const expectedAnswer = englishAnswers[currentIndex].split(' ');
+            const userAnswer = document.getElementById('answerEnglish').value.split(' ');
+
+            let resultHtml = "";
+            let isCorrect = true;
+
+            for (let i = 0; i < expectedAnswer.length; i++) {
+                const normalizedExpected = normalizeText(expectedAnswer[i]);
+                const normalizedUser = normalizeText(userAnswer[i] || '');
+
+                if (normalizedUser === normalizedExpected) {
+                    resultHtml += `<span style="color: green">${userAnswer[i] || ''}</span> `;
+                } else {
+                    resultHtml += `<span style="color: red">${userAnswer[i] || ''}</span> `;
+                    isCorrect = false;
+                }
             }
+
+            showResult(isCorrect ? "Правильный ответ!" : "Ответ неправильный.", isCorrect);
+            document.getElementById('result').innerHTML += `<div>${resultHtml}</div>`;
         }
 
         function showAnswer() {
@@ -207,7 +247,7 @@
         function speakText() {
             const text = document.getElementById('answerEnglish').value;
             const speechSynthesisUtterance = new SpeechSynthesisUtterance(text);
-            speechSynthesisUtterance.lang = 'en-GB'; // Устанавливаем язык на английский (Великобритания)
+            speechSynthesisUtterance.lang = 'en-GB';
             speechSynthesisUtterance.voice = getGoogleUKVoice();
             synth.speak(speechSynthesisUtterance);
         }
@@ -219,7 +259,6 @@
                     return voices[i];
                 }
             }
-            // Если не найден конкретный голос, можно вернуть первый попавшийся
             return voices[0];
         }
 
@@ -229,9 +268,9 @@
             resultDiv.className = isCorrect ? 'result correct' : 'result incorrect';
         }
 
-        // Инициализация при загрузке страницы
         document.addEventListener('DOMContentLoaded', function() {
-            nextQuestion(); // Показываем первый вопрос при загрузке страницы
+            currentIndex = Math.floor(Math.random() * russianQuestions.length);
+            displayQuestion(currentIndex);
         });
     </script>
 </body>
